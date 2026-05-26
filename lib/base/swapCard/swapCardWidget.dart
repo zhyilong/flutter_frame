@@ -8,9 +8,9 @@ import 'package:flutter/cupertino.dart';
 
 // 无限循环模式枚举
 enum LoopMode {
-  disabled,    // 关闭无限循环
+  disabled, // 关闭无限循环
   largeNumber, // 方案一：虚拟能量放大法（大数法）
-  copyJump,    // 方案二：首尾副本跳转法
+  copyJump, // 方案二：首尾副本跳转法
 }
 
 class SwapCardWidget extends StatefulWidget {
@@ -25,7 +25,7 @@ class SwapCardWidget extends StatefulWidget {
     this.autoPlay = false,
     this.autoPlayInterval = const Duration(seconds: 3),
     this.loopMode = LoopMode.disabled,
-  });
+  }) : assert(itemCount > 0, 'itemCount must be greater than 0');
 
   final int itemCount;
   final Widget Function(BuildContext context, int index) itemBuilder;
@@ -43,16 +43,16 @@ class SwapCardWidget extends StatefulWidget {
 
 class _SwapCardWidgetState extends State<SwapCardWidget> {
   late final PageController _pageController;
-  final List<double> _scales = [];
   Timer? _debounceTimer;
   Timer? _autoPlayTimer;
   Timer? _loopJumpTimer;
   late final int _displayCount;
   late final int _initialPage;
+  late final LoopMode _effectiveLoopMode;  // 实际使用的循环模式
   bool _isScrolling = false;
 
   // 方案一（大数法）专用
-  static const int _largeNumber = 100000;
+  static const int _largeNumber = 1000;
 
   @override
   void initState() {
@@ -61,26 +61,16 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
     // 根据不同的循环模式初始化
     _initByLoopMode();
 
-    // 初始化缩放值列表（只初始化需要的数量）
-    final int scaleCount = widget.loopMode == LoopMode.largeNumber
-        ? widget.itemCount
-        : _displayCount;
-    for (int i = 0; i < scaleCount; i++) {
-      _scales.add(1.0);
-    }
+    _pageController = PageController(viewportFraction: 0.6, initialPage: _initialPage);
 
-    _pageController = PageController(
-      viewportFraction: 0.6,
-      initialPage: _initialPage,
-    );
-
-    // 首帧渲染后计算初始缩放
+    // 首帧渲染后启动自动播放
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.autoPlay) {
         _startAutoPlay();
       }
     });
 
+    // 不再需要 _updateScales，因为使用动态计算
     _pageController.addListener(() {
       _notifySlideStop();
     });
@@ -88,7 +78,17 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
 
   // 根据循环模式初始化参数
   void _initByLoopMode() {
-    switch (widget.loopMode) {
+    // 当卡片数量少于 2 张时，禁用无限循环
+    if (widget.itemCount < 2) {
+      _effectiveLoopMode = LoopMode.disabled;
+      _displayCount = widget.itemCount;
+      _initialPage = widget.initialPage;
+      return;
+    }
+
+    _effectiveLoopMode = widget.loopMode;
+
+    switch (_effectiveLoopMode) {
       case LoopMode.largeNumber:
         // 方案一：大数法
         _displayCount = _largeNumber;
@@ -109,7 +109,7 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
 
   // 将显示索引映射到真实数据索引
   int _getRealIndex(int displayIndex) {
-    switch (widget.loopMode) {
+    switch (_effectiveLoopMode) {
       case LoopMode.largeNumber:
         // 方案一：使用取模运算
         return displayIndex % widget.itemCount;
@@ -129,10 +129,10 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
 
   // 处理循环滚动跳转（仅方案二需要）
   void _handleLoopScroll() {
-    if (widget.loopMode != LoopMode.copyJump) return;
+    if (_effectiveLoopMode != LoopMode.copyJump) return;
     if (_isScrolling) return;
 
-    final double page = _pageController.page ?? 0;
+    final double page = _pageController.page ?? _initialPage.toDouble();
     final int currentPage = page.round();
 
     // 滚动到最右边的副本时，跳转到左边真实位置
@@ -162,13 +162,9 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
   void _startAutoPlay() {
     _stopAutoPlay();
     _autoPlayTimer = Timer.periodic(widget.autoPlayInterval, (timer) {
-      final int currentPage = (_pageController.page ?? 0).round();
+      final int currentPage = (_pageController.page ?? _initialPage.toDouble()).round();
       final int nextPage = currentPage + 1;
-      _pageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      _pageController.animateToPage(nextPage, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     });
   }
 
@@ -179,22 +175,24 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
 
   // 动态计算指定索引的缩放值
   double _calculateScale(int index) {
-    final double page = _pageController.page ?? 0.0;
+    // 使用 initialPage 作为默认值，确保初始化时正确显示
+    final double page = _pageController.page ?? _initialPage.toDouble();
     double distance;
 
-    if (widget.loopMode == LoopMode.largeNumber) {
+    if (_effectiveLoopMode == LoopMode.largeNumber) {
       // 方案一：大数法，计算相对距离
-      final int currentPage = page.round();
-      final int relativeIndex = index - currentPage;
+      // 使用 truncate 而不是 round，避免 page 值变化时突然跳变
+      final int currentPage = page.truncate();
+      final double relativePosition = index - page;
       final int halfCount = widget.itemCount ~/ 2;
 
-      // 将相对索引映射到 [-halfCount, halfCount] 范围内
-      if (relativeIndex > halfCount) {
-        distance = (relativeIndex - widget.itemCount).abs().toDouble();
-      } else if (relativeIndex < -halfCount) {
-        distance = (relativeIndex + widget.itemCount).abs().toDouble();
+      // 将相对位置映射到 [-halfCount, halfCount] 范围内
+      if (relativePosition > halfCount) {
+        distance = (relativePosition - widget.itemCount).abs();
+      } else if (relativePosition < -halfCount) {
+        distance = (relativePosition + widget.itemCount).abs();
       } else {
-        distance = relativeIndex.abs().toDouble();
+        distance = relativePosition.abs();
       }
     } else {
       // 方案二和无循环模式，直接计算距离
@@ -215,30 +213,11 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
     return scale.clamp(widget.minScale, 1.0);
   }
 
-  // 更新缩放值（仅方案二和关闭循环需要）
-  void _updateScales() {
-    if (widget.loopMode == LoopMode.largeNumber) return; // 方案一不需要
-
-    final double page = _pageController.page ?? 0.0;
-    setState(() {
-      for (int i = 0; i < _displayCount; i++) {
-        double distance = (page - i).abs();
-        double scale;
-        if (distance < 0.5) {
-          scale = 1.0 - (distance * 0.1);
-        } else {
-          scale = 0.95 - ((distance - 0.5) * 0.2);
-        }
-        _scales[i] = scale.clamp(widget.minScale, 1.0);
-      }
-    });
-  }
-
   void _notifySlideStop() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 150), () {
       if (widget.onSlideStop != null) {
-        final int displayIndex = (_pageController.page ?? 0.0).round();
+        final int displayIndex = (_pageController.page ?? _initialPage.toDouble()).round();
         final int realIndex = _getRealIndex(displayIndex);
         widget.onSlideStop!(realIndex);
       }
@@ -256,18 +235,11 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // 使用局部变量避免重复访问 widget
-    final bool useLargeNumberMode = widget.loopMode == LoopMode.largeNumber;
-
     return NotificationListener<ScrollEndNotification>(
       onNotification: (notification) {
         // 滚动结束后处理循环跳转（仅方案二需要）
-        if (widget.loopMode == LoopMode.copyJump) {
+        if (_effectiveLoopMode == LoopMode.copyJump) {
           _handleLoopScroll();
-        }
-        // 方案二和关闭循环模式需要更新缩放
-        if (!useLargeNumberMode) {
-          _updateScales();
         }
         return true;
       },
@@ -279,23 +251,18 @@ class _SwapCardWidgetState extends State<SwapCardWidget> {
           return AnimatedBuilder(
             animation: _pageController,
             builder: (context, child) {
-              // 获取当前索引的缩放值
-              final double scale = useLargeNumberMode
-                  ? _calculateScale(index)
-                  : _scales[index];
+              // 所有模式都使用动态计算缩放，保证实时效果
+              final double scale = _calculateScale(index);
 
               return GestureDetector(
                 onTap: () {
-                  final double page = _pageController.page ?? 0.0;
+                  final double page = _pageController.page ?? _initialPage.toDouble();
                   final int centerIndex = page.round();
                   if (index == centerIndex && widget.onCenterCardTap != null) {
                     widget.onCenterCardTap!(realIndex);
                   }
                 },
-                child: Transform.scale(
-                  scale: scale,
-                  child: widget.itemBuilder(context, realIndex),
-                ),
+                child: Transform.scale(scale: scale, child: widget.itemBuilder(context, realIndex)),
               );
             },
           );

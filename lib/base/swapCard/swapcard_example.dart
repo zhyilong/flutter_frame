@@ -54,6 +54,7 @@ class _SwapcardExampleState extends State<SwapcardExample> {
             Container(
               height: 300,
               child: SwapCardWidget(
+                key: ValueKey(_selectedLoopMode),  // 切换模式时重新创建组件
                 itemCount: _urls.length,
                 minScale: 0.4,
                 initialPage: 2,
