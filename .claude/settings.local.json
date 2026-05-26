@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dart compile exe:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(dart run build_runner build:*)",
+      "Bash(flutter test:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter clean:*)",
+      "WebSearch",
+      "Bash(move:*)"
+    ]
+  }
+}

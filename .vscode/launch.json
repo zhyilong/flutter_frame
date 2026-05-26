@@ -1,0 +1,47 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "开发环境",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=ENVIRONMENT=development"
+      ]
+    },
+    {
+      "name": "测试环境",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=ENVIRONMENT=testing"
+      ]
+    },
+    {
+      "name": "生产环境",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=ENVIRONMENT=production"
+      ]
+    },
+    {
+      "name": "开发环境 (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "profile",
+      "args": [
+        "--dart-define=ENVIRONMENT=development"
+      ]
+    },
+    {
+      "name": "开发环境 (Release)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "args": [
+        "--dart-define=ENVIRONMENT=development"
+      ]
+    }
+  ]
+}
