@@ -10,7 +10,9 @@
 - 🖱️ **中心卡片点击**：只响应中心卡片的点击事件
 - ⚙️ **可配置参数**：支持自定义最小缩放值、初始页码
 - 🎬 **自动播放**：支持自动轮播，可配置播放间隔
-- 🔄 **无限循环**：支持首尾相连的无限滚动（基于首尾副本跳转方案）
+- 🔄 **双模式无限循环**：
+  - 方案一：虚拟能量放大法（大数法）
+  - 方案二：首尾副本跳转法
 - 🎭 **流畅动画**：基于 AnimatedBuilder 实现平滑的缩放过渡
 
 ## 依赖
@@ -49,7 +51,7 @@ SwapCardWidget(
   initialPage: 0,             // 可选：初始页码，默认 0
   autoPlay: true,             // 可选：自动播放，默认 false
   autoPlayInterval: const Duration(seconds: 3),  // 可选：播放间隔，默认 3秒
-  loop: true,                 // 可选：无限循环，默认 false
+  loopMode: LoopMode.largeNumber,  // 可选：循环模式，默认 LoopMode.disabled
   itemBuilder: (context, index) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -78,13 +80,123 @@ SwapCardWidget(
 | `itemCount` | `int` | ✅ | - | 卡片总数 |
 | `itemBuilder` | `Widget Function(BuildContext, int)` | ✅ | - | 卡片构建器，返回每个卡片的 widget |
 | `minScale` | `double` | ❌ | `0.5` | 最小缩放值（范围 0.0-1.0） |
-| `initialPage` | `int` | ❌ | `0` | 初始显示的页码 |
+| `initialPage` | `int` | ❌ | `0` | 初始显示的页码（非循环模式有效） |
 | `autoPlay` | `bool` | ❌ | `false` | 是否自动播放 |
 | `autoPlayInterval` | `Duration` | ❌ | `3秒` | 自动播放间隔时间 |
+| `loopMode` | `LoopMode` | ❌ | `LoopMode.disabled` | 无限循环模式 |
 | `onSlideStop` | `void Function(int)?` | ❌ | `null` | 滑动停止回调，返回中心卡片索引 |
 | `onCenterCardTap` | `void Function(int)?` | ❌ | `null` | 中心卡片点击回调，返回被点击的卡片索引 |
 
+**LoopMode 枚举值：**
+- `LoopMode.disabled` - 关闭无限循环
+- `LoopMode.largeNumber` - 方案一：虚拟能量放大法（大数法）
+- `LoopMode.copyJump` - 方案二：首尾副本跳转法
+
 ## 核心实现原理
+
+### 两种无限循环方案对比
+
+#### 方案一：虚拟能量放大法（大数法）✅ 推荐
+
+**原理图：**
+```
+实际卡片: [0, 1, 2, 3, 4]  (5张)
+PageView显示: [0, 1, 2, ..., 49998, 49999, 50000, ..., 99999]  (100000个位置)
+                                    ↑
+                              initialPage = 50000
+```
+
+**实现步骤：**
+```dart
+// 1. 设置大数为 itemCount
+_displayCount = 100000;
+_initialPage = 50000;
+
+// 2. 使用取模运算获取真实索引
+int _getRealIndex(int displayIndex) {
+  return displayIndex % actualCount;
+}
+
+// 3. 缩放计算时处理虚拟索引
+double _getDistance(double page, int index) {
+  final int relativeIndex = index - page.round();
+  final int halfCount = actualCount ~/ 2;
+
+  // 将相对索引映射到 [-halfCount, halfCount] 范围
+  if (relativeIndex > halfCount) {
+    return (relativeIndex - actualCount).abs();
+  } else if (relativeIndex < -halfCount) {
+    return (relativeIndex + actualCount).abs();
+  }
+  return relativeIndex.abs();
+}
+```
+
+**优点：**
+- ✅ 实现简单，无需监听和跳转
+- ✅ 性能好，Flutter 懒加载只创建可见页面
+- ✅ 真正的无限，用户感觉不到边界
+- ✅ 滑动流畅，没有任何跳跃感
+
+**缺点：**
+- ⚠️ 理论上可以滚动到尽头（但需要 50000 次滑动）
+
+---
+
+#### 方案二：首尾副本跳转法
+
+**原理图：**
+```
+实际数据: [0, 1, 2, 3, 4]  (5张卡片)
+显示结构: [3, 4, 0, 1, 2, 3, 4, 0, 1]  (9个位置)
+           ←副本  真实数据  副本→
+```
+
+**实现步骤：**
+```dart
+// 1. 在真实数据前后各加2个副本
+_displayCount = itemCount + 4;
+_initialPage = 2;
+
+// 2. 索引映射
+int _getRealIndex(int displayIndex) {
+  if (displayIndex < 2) {
+    return itemCount - 2 + displayIndex;
+  } else if (displayIndex >= 2 + itemCount) {
+    return displayIndex - 2 - itemCount;
+  } else {
+    return displayIndex - 2;
+  }
+}
+
+// 3. 滚动结束后跳转
+void _handleLoopScroll() {
+  if (currentPage >= 2 + itemCount) {
+    _pageController.jumpToPage(2);
+  } else if (currentPage < 2) {
+    _pageController.jumpToPage(2 + itemCount - 1);
+  }
+}
+```
+
+**优点：**
+- ✅ 不浪费内存（只多创建 4 个 widget）
+- ✅ 真正的无限循环
+- ✅ 实现直观
+
+**缺点：**
+- ⚠️ 需要处理跳转时机
+- ⚠️ 如果跳转时机不当会有跳跃感（已优化：在滚动结束时跳转）
+
+---
+
+### 方案选择建议
+
+| 场景 | 推荐方案 | 原因 |
+|------|---------|------|
+| 一般应用 | **方案一（大数法）** | 实现简单，无需关心跳转逻辑 |
+| 内存敏感 | **方案二（副本跳转）** | 明确知道只会创建 4 个额外 widget |
+| 需要精确控制 | **方案二（副本跳转）** | 索引是真实的，更容易调试 |
 
 ### 1. 缩放计算系统
 
@@ -157,7 +269,7 @@ void _startAutoPlay() {
   _stopAutoPlay();
   _autoPlayTimer = Timer.periodic(widget.autoPlayInterval, (timer) {
     final int currentPage = (_pageController.page ?? widget.initialPage).round();
-    final int nextPage = (currentPage + 1) % widget.itemCount;
+    final int nextPage = currentPage + 1;
     _pageController.animateToPage(
       nextPage,
       duration: const Duration(milliseconds: 300),
@@ -169,7 +281,7 @@ void _startAutoPlay() {
 
 **关键点：**
 - 使用 `Timer.periodic` 定时触发翻页
-- 使用模运算 `(currentPage + 1) % itemCount` 实现循环播放
+- 自动播放支持循环模式
 - 使用 `animateToPage` 实现平滑翻页动画
 - 在组件销毁时自动取消定时器
 
@@ -219,6 +331,8 @@ Transform.scale 应用缩放
 - 用户触摸时暂停自动播放
 - 自定义滚动曲线
 - 添加页面切换动画效果
+- 支持双向滑动（反向播放）
+- 添加页面切换监听（非停止状态）
 
 ## 文件结构
 
@@ -231,6 +345,17 @@ lib/base/swapCard/
 ```
 
 ## 版本历史
+
+- **v1.3** - 双模式无限循环
+  - 添加 `LoopMode` 枚举，支持两种循环方案
+  - 方案一：虚拟能量放大法（大数法）- 实现简单，性能优秀
+  - 方案二：首尾副本跳转法 - 内存可控，实现直观
+  - 两种方案完全分离，通过参数切换
+
+- **v1.2** - 新增无限循环功能
+  - 添加 `loop` 参数实现真正的无限循环滚动
+  - 采用首尾副本跳转方案，不浪费内存
+  - 所有回调返回真实索引，使用者无感知
 
 - **v1.1** - 新增自动播放功能
   - 添加 `autoPlay` 参数控制是否自动播放

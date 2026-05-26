@@ -23,11 +23,30 @@ class _SwapcardExampleState extends State<SwapcardExample> {
   ];
 
   String _statusMessage = "Slide or tap the center card";
+  LoopMode _selectedLoopMode = LoopMode.largeNumber;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SwapCard Example')),
+      appBar: AppBar(
+        title: const Text('SwapCard Example'),
+        actions: [
+          DropdownButton<LoopMode>(
+            value: _selectedLoopMode,
+            onChanged: (LoopMode? newValue) {
+              setState(() {
+                _selectedLoopMode = newValue!;
+                _statusMessage = "Loop Mode: ${_getLoopModeName(newValue)}";
+              });
+            },
+            items: const [
+              DropdownMenuItem(value: LoopMode.disabled, child: Text("No Loop")),
+              DropdownMenuItem(value: LoopMode.largeNumber, child: Text("Large Number")),
+              DropdownMenuItem(value: LoopMode.copyJump, child: Text("Copy Jump")),
+            ],
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -36,19 +55,20 @@ class _SwapcardExampleState extends State<SwapcardExample> {
               height: 300,
               child: SwapCardWidget(
                 itemCount: _urls.length,
-                minScale: 0.4, // Optional: customize minimum scale (default is 0.5)
-                initialPage: 2, // Optional: start from page 2 (default is 0)
-                autoPlay: true, // Optional: enable auto play (default is false)
-                autoPlayInterval: const Duration(seconds: 3), // Optional: interval (default is 3 seconds)
-                loop: true, // Optional: enable infinite loop (default is false)
+                minScale: 0.4,
+                initialPage: 2,
+                autoPlay: false,
+                autoPlayInterval: const Duration(seconds: 3),
+                loopMode: _selectedLoopMode,
                 itemBuilder: (context, index) {
-                  // Custom card widget - just provide your widget, scaling is automatic
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
-                        // boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, spreadRadius: 2)],
+                        // boxShadow: [
+                        //   BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, spreadRadius: 2),
+                        // ],
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
@@ -66,13 +86,11 @@ class _SwapcardExampleState extends State<SwapcardExample> {
                   );
                 },
                 onSlideStop: (centerIndex) {
-                  // Callback when sliding stops
                   setState(() {
                     _statusMessage = "Slid to card ${centerIndex + 1}";
                   });
                 },
                 onCenterCardTap: (index) {
-                  // Callback when center card is tapped
                   setState(() {
                     _statusMessage = "Tapped card ${index + 1}";
                   });
@@ -80,10 +98,27 @@ class _SwapcardExampleState extends State<SwapcardExample> {
               ),
             ),
             const SizedBox(height: 40),
-            Text(_statusMessage, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+            Text(
+              _statusMessage,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            Text("Current Mode: ${_getLoopModeName(_selectedLoopMode)}", style: const TextStyle(fontSize: 14, color: Colors.grey)),
           ],
         ),
       ),
     );
+  }
+
+  String _getLoopModeName(LoopMode mode) {
+    switch (mode) {
+      case LoopMode.disabled:
+        return "No Loop";
+      case LoopMode.largeNumber:
+        return "Large Number (方案一)";
+      case LoopMode.copyJump:
+        return "Copy Jump (方案二)";
+    }
   }
 }
