@@ -4,7 +4,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mvvm_demo/base/swapCard/swapCardWidget.dart';
+import 'package:mvvm_demo/base/widgets/swapCard/swapCardWidget.dart';
 
 class SwapcardExample extends StatefulWidget {
   const SwapcardExample({super.key});
@@ -54,7 +54,7 @@ class _SwapcardExampleState extends State<SwapcardExample> {
             Container(
               height: 300,
               child: SwapCardWidget(
-                key: ValueKey(_selectedLoopMode),  // 切换模式时重新创建组件
+                key: ValueKey(_selectedLoopMode), // 切换模式时重新创建组件
                 itemCount: _urls.length,
                 minScale: 0.4,
                 initialPage: 2,

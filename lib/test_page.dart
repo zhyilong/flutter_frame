@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
-import 'package:mvvm_demo/base/swapCard/swapcard_example.dart';
+import 'package:mvvm_demo/base/widgets/swapCard/swapcard_example.dart';
 import 'base/network/dio_client.dart';
 import 'base/widgets/hud/hud.dart';
 import 'base/widgets/qr_scanner/qr_scanner_view.dart';
