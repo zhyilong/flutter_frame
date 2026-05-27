@@ -4,7 +4,7 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:mvvm_demo/base/widgets/hud/hud.dart';
+import '../hud/hud.dart';
 
 import 'nfc_scanner_widget.dart';
 import 'nfc_helper.dart';

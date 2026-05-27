@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
-import 'package:mvvm_demo/base/widgets/hud/hud.dart';
+import '../hud/hud.dart';
 import 'nfc_helper.dart';
 
 /// NFC扫描状态

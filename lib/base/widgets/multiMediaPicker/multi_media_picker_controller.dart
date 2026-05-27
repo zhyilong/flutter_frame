@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:mvvm_demo/base/widgets/hud/hud.dart';
+import '../hud/hud.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:uuid/uuid.dart';

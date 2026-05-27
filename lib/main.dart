@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
-import 'package:mvvm_demo/base/notificationCenter/notificationCenter.dart';
-import 'package:mvvm_demo/base/widgets/hud/hud.dart';
-import 'package:mvvm_demo/business/shared/application.dart';
-import 'package:mvvm_demo/business/shared/environment.dart';
-import 'package:mvvm_demo/test_page.dart';
+import 'base/notificationCenter/notificationCenter.dart';
+import 'base/widgets/hud/hud.dart';
+import 'business/shared/application.dart';
+import 'business/shared/environment.dart';
+import 'test_page.dart';
 
 void main() {
   runApp(ProviderScope(child: MyApp()));

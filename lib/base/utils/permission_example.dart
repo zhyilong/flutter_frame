@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:mvvm_demo/base/utils/permissionUtil.dart';
+import 'permissionUtil.dart';
 
 /// 权限工具类使用示例
 ///

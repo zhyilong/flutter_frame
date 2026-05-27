@@ -3,9 +3,9 @@
  */
 
 import 'package:logger/logger.dart';
-import 'package:mvvm_demo/base/network/dio_client.dart';
-import 'package:mvvm_demo/business/features/userInfo/models/User.dart';
-import 'package:mvvm_demo/business/shared/environment.dart';
+import '../../../../base/network/dio_client.dart';
+import '../models/User.dart';
+import '../../../shared/environment.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'userRepository.g.dart';

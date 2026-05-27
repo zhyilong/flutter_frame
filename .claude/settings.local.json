@@ -9,7 +9,12 @@
       "Bash(flutter clean:*)",
       "WebSearch",
       "Bash(move:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(flutter doctor:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter config:*)",
+      "Bash(flutter devices:*)",
+      "Bash(flutter create:*)"
     ]
   }
 }

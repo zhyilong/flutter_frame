@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
-import 'package:mvvm_demo/base/widgets/swapCard/swapcard_example.dart';
+import 'base/widgets/swapCard/swapcard_example.dart';
 import 'base/network/dio_client.dart';
 import 'base/widgets/hud/hud.dart';
 import 'base/widgets/qr_scanner/qr_scanner_view.dart';
 import 'base/widgets/qr_scanner/example_usage.dart';
 import 'base/widgets/view/demo_view.dart';
-import 'package:mvvm_demo/examples/keyboard_animation_complete_example.dart';
-import 'package:mvvm_demo/examples/keyboard_safe_form_example.dart';
+import 'examples/keyboard_animation_complete_example.dart';
+import 'examples/keyboard_safe_form_example.dart';
 
 import 'base/widgets/mediaViewer/media_viewer_example.dart';
 import 'base/widgets/multiMediaPicker/example_usage.dart';

@@ -4,7 +4,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mvvm_demo/base/widgets/swapCard/swapCardWidget.dart';
+import 'swapCardWidget.dart';
 
 class SwapcardExample extends StatefulWidget {
   const SwapcardExample({super.key});

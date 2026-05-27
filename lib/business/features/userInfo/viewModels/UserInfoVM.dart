@@ -2,7 +2,7 @@
  * Created by zhyilong on 2026/5/13
  */
 
-import 'package:mvvm_demo/base/widgets/hud/hud.dart';
+import '../../../../base/widgets/hud/hud.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../models/User.dart';
